@@ -16,5 +16,7 @@ aws cloudformation package --template-file cfn.yaml --s3-bucket bucket-name --ou
 * Create the stack using below command
 
 ```
-aws cloudformation create-stack --stack-name apigateway-monitorin --template-body file://packaged-template.json --region us-east-1 --capabilities CAPABILITY_IAM
+aws cloudformation create-stack --stack-name apigateway-monitoring --template-body file://packaged-template.json --region us-east-1 --capabilities CAPABILITY_IAM
 ```
+
+### Adjust the permissions for the lambda accordingly in the template.
