@@ -1,0 +1,95 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Api Gateway Monitoring Automation"
+Parameters:
+  AlarmEmail: 
+    Default: "jane.doe@example.com"
+    Description: "Email address to notify of operational issues"
+    Type: "String"
+Resources:
+  EventRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: "EventRule"
+      EventPattern:
+        source:
+          - aws.apigateway
+        detail-type:
+          - AWS API Call via CloudTrail
+        detail:
+          eventSource:
+            - apigateway.amazonaws.com
+          eventName:
+            - CreateDeployment
+      Targets:
+        - 
+          Arn:
+            Fn::GetAtt:
+              - "LambdaFunction"
+              - "Arn"
+          Id: "TargetFunctionV1"
+
+  PermissionsForEventsToInvokeLambda:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName:
+        Ref: "LambdaFunction"
+      Action: "lambda:InvokeFunction"
+      Principal: "events.amazonaws.com"
+      SourceArn:
+        Fn::GetAtt:
+          - "EventRule"
+          - "Arn"
+
+  LambdaFunction:
+    Type: "AWS::Lambda::Function"
+    Properties:
+      Code:
+      Description: "My Function"
+      FunctionName: "apigateway-monitoring"
+      Handler: "create-alarms.handler"
+      MemorySize: 128
+      Role: !GetAtt "LambdaRole.Arn"
+      Runtime: "python3.7"
+      Timeout: 10
+      Environment:
+        Variables:
+          API_GAWATE_ENDPOINT: "somerandomsstuff"
+          ALARM_SNS_TOPIC: !Ref "AlarmSNSTopic"
+  
+  LambdaRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Action:
+              - "sts:AssumeRole"
+            Effect: "Allow"
+            Principal:
+              Service:
+                - "lambda.amazonaws.com"
+      Policies:
+        - PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Action:
+                  - "logs:*"
+                  - "lambda:*"
+                  - "events:*"
+                  - "apigateway:*"
+                  - "sns:*"
+                  - "cloudwatch:*"
+                Effect: "Allow"
+                Resource: "*"
+          PolicyName: "lambda"
+
+  AlarmSNSTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      DisplayName: "apigateway-alarms"
+      TopicName: "apigateway-alarms"
+      Subscription:
+        - 
+          Endpoint:
+            Ref: "AlarmEmail"
+          Protocol: "email"
