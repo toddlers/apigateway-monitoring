@@ -1,6 +1,9 @@
 # apigateway-monitoring
 
+
 * Automated CloudWatch alarms creation for ApiGateway resources via Lambda.
+
+![Basic Flow](diagram.png)
 
 * We need to have an S3 bucket where we gonna upload the Lambda code.
 
